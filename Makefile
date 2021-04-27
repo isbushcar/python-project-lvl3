@@ -15,3 +15,6 @@ test:
 
 coverage:
 	poetry run pytest --cov=page_loader tests/test.py --cov-report xml
+
+cov-html:
+	poetry run pytest --cov=page_loader tests/test.py --cov-report html

@@ -29,7 +29,7 @@ def test():
                 response.get(test_address + 'assets/application.css', text=link.read())
                 response.get('https://cdn2.hexlet.io/assets/menu.css', text=link.read())
             with open(os.path.join(CWD, EXPECTED_COURSES_HTML), 'r') as link:
-                response.get(test_address + 'links/courses.html', text=link.read())
+                response.get(test_address + 'courses', text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(test_address + 'packs/js/runtime.js', text=script.read())
             download(test_address, dir_to_save)
@@ -41,18 +41,18 @@ def test():
 
         def content_exists(name):
             return os.path.exists(os.path.join(files_dir, name))
-        assert content_exists('images-python-icon.png'), 'all images should be downloaded'
-        assert content_exists('images-python-icon2.png'), 'all images should be downloaded'
-        assert content_exists('application.css'), 'links content should be downloaded'
-        application_css = os.path.join(files_dir, 'application.css')
+        assert content_exists('ru-hexlet-io-images-python-icon.png'), 'all images should be downloaded'
+        assert content_exists('ru-hexlet-io-images-python-icon2.png'), 'all images should be downloaded'
+        assert content_exists('ru-hexlet-io-assets-application.css'), 'links content should be downloaded'
+        application_css = os.path.join(files_dir, 'ru-hexlet-io-assets-application.css')
         with open(application_css) as application_css, open(EXPECTED_APPLICATION_CSS) as expected_application_css:
             assert application_css.read() == expected_application_css.read(), 'application.css should be equal'
-        assert content_exists('courses.html'), 'links content should be downloaded'
-        courses_html = os.path.join(files_dir, 'courses_html')
+        assert content_exists('ru-hexlet-io-courses.html'), 'links content should be downloaded'
+        courses_html = os.path.join(files_dir, 'ru-hexlet-io-courses.html')
         with open(courses_html) as courses_html, open(EXPECTED_COURSES_HTML) as expected_courses_html:
             assert courses_html.read() == expected_courses_html.read(), 'courses.html should be equal'
-        assert not content_exists('cdn2.hexlet-io-assets-menu.css'), 'files from other host should not be downloaded'
-        assert content_exists('runtime.js'), 'script content should be downloaded'
-        runtime_js = os.path.join(files_dir, 'runtime.js')
+        assert not content_exists('ru-hexlet-io-cdn2-hexlet-io-assets-menu.css'), 'files from other host should not be downloaded'
+        assert content_exists('ru-hexlet-io-packs-js-runtime.js'), 'script content should be downloaded'
+        runtime_js = os.path.join(files_dir, 'ru-hexlet-io-packs-js-runtime.js')
         with open(runtime_js) as runtime_js, open(EXPECTED_RUNTIME_JS) as expected_runtime_js:
             assert runtime_js.read() == expected_runtime_js.read(), 'runtime.js should be equal'

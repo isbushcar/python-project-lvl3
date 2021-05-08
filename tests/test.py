@@ -2,6 +2,8 @@ import os
 import tempfile
 
 import requests_mock
+from urllib.parse import urljoin
+
 from page_loader import download
 
 CWD = os.getcwd()
@@ -22,16 +24,16 @@ def test():
             with open(fixture, 'r') as fixture_content:
                 response.get(test_address, text=fixture_content.read())
             with open(os.path.join(CWD, EXPECTED_IMAGE1), 'rb') as image1:
-                response.get(test_address + 'images/python-icon.png', content=image1.read())
+                response.get(urljoin(test_address, 'images/python-icon.png'), content=image1.read())
             with open(os.path.join(CWD, EXPECTED_IMAGE2), 'rb') as image2:
-                response.get(test_address + 'images/python-icon2.png', content=image2.read())
+                response.get(urljoin(test_address, 'images/python-icon2.png'), content=image2.read())
             with open(os.path.join(CWD, EXPECTED_APPLICATION_CSS), 'r') as link:
-                response.get(test_address + 'assets/application.css', text=link.read())
+                response.get(urljoin(test_address, 'assets/application.css'), text=link.read())
                 response.get('https://cdn2.hexlet.io/assets/menu.css', text=link.read())
             with open(os.path.join(CWD, EXPECTED_COURSES_HTML), 'r') as link:
-                response.get(test_address + 'courses', text=link.read())
+                response.get(urljoin(test_address, 'courses'), text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
-                response.get(test_address + 'packs/js/runtime.js', text=script.read())
+                response.get(urljoin(test_address, 'packs/js/runtime.js'), text=script.read())
             download(test_address, dir_to_save)
         result_file = os.path.join(dir_to_save, 'ru-hexlet-io-courses.html')
         assert os.path.exists(result_file) is True, 'page should exist'

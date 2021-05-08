@@ -2,7 +2,7 @@
 
 
 import os
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,17 +15,28 @@ def download(url, path_to_save):
     if not os.path.exists(dir_to_save):
         os.mkdir(dir_to_save)
     parsed_page = BeautifulSoup(requests.get(url).text, 'html.parser')
-    for element in parsed_page.find_all('img'):
+    for element in parsed_page.find_all(['img', 'link', 'script']):
+        if element.name == 'link':
+            index = 'href'
+        else:
+            index = 'src'
+        try:
+            old_link = element[index].strip('/')
+        except KeyError:
+            continue
+        if urlparse(urljoin(url, old_link))[1] != urlparse(url)[1]:
+            continue
         files_folder = os.path.join(page_name + '_files/')
         files_dir = os.path.join(dir_to_save, files_folder)
         if not os.path.exists(files_dir):
             os.mkdir(files_dir)
-        old_link = element['src'].strip('/')
-        file_name = get_file_name(old_link)
+        file_name = f'{get_file_name(urlparse(url)[1], "page")}-{get_file_name(old_link)}'
+        if file_name.find('.') == -1:
+            file_name += '.html'
         with open(os.path.join(files_dir, file_name), 'wb') as file_to_save:
             file_content = requests.get(url.rstrip('/') + '/' + old_link).content
             file_to_save.write(file_content)
-        element['src'] = f'{files_folder}{file_name}'
+        element[index] = f'{files_folder}{file_name}'
     with open(os.path.join(dir_to_save, f'{page_name}.html'), 'w') as page_to_save:
         page_to_save.write(parsed_page.prettify(formatter='html5'))
 

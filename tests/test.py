@@ -9,6 +9,7 @@ EXPECTED_PAGE = os.path.join(CWD, 'tests/fixtures/test-page-result.html')
 EXPECTED_IMAGE1 = os.path.join(CWD, 'tests/fixtures/images/python-icon.png')
 EXPECTED_IMAGE2 = os.path.join(CWD, 'tests/fixtures/images/python-icon2.png')
 EXPECTED_APPLICATION_CSS = os.path.join(CWD, 'tests/fixtures/links/application.css')
+EXPECTED_COURSES_HTML = os.path.join(CWD, 'tests/fixtures/links/courses.html')
 EXPECTED_RUNTIME_JS = os.path.join(CWD, 'tests/fixtures/scripts/runtime.js')
 
 
@@ -27,6 +28,8 @@ def test():
             with open(os.path.join(CWD, EXPECTED_APPLICATION_CSS), 'r') as link:
                 response.get(test_address + 'assets/application.css', text=link.read())
                 response.get('https://cdn2.hexlet.io/assets/menu.css', text=link.read())
+            with open(os.path.join(CWD, EXPECTED_COURSES_HTML), 'r') as link:
+                response.get(test_address + 'links/courses.html', text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(test_address + 'packs/js/runtime.js', text=script.read())
             download(test_address, dir_to_save)
@@ -44,6 +47,10 @@ def test():
         application_css = os.path.join(files_dir, 'application.css')
         with open(application_css) as application_css, open(EXPECTED_APPLICATION_CSS) as expected_application_css:
             assert application_css.read() == expected_application_css.read(), 'application.css should be equal'
+        assert content_exists('courses.html'), 'links content should be downloaded'
+        courses_html = os.path.join(files_dir, 'courses_html')
+        with open(courses_html) as courses_html, open(EXPECTED_COURSES_HTML) as expected_courses_html:
+            assert courses_html.read() == expected_courses_html.read(), 'courses.html should be equal'
         assert not content_exists('cdn2.hexlet-io-assets-menu.css'), 'files from other host should not be downloaded'
         assert content_exists('runtime.js'), 'script content should be downloaded'
         runtime_js = os.path.join(files_dir, 'runtime.js')

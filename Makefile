@@ -18,3 +18,9 @@ coverage:
 
 cov-html:
 	poetry run pytest --cov=page_loader tests/test.py --cov-report html
+
+reinstall:
+	rm dist -r
+	python3 -m pip uninstall hexlet-code
+	poetry build
+	python3 -m pip install --user dist/*.whl

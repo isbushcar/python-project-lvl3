@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def download(url, path_to_save):
+def download(url, path_to_save, log=False):
     """Save internet page to specified directory."""
     page_name = get_file_name(url, file_type='page')
     dir_to_save = os.path.join(os.getcwd(), path_to_save)
@@ -34,12 +34,14 @@ def download(url, path_to_save):
         file_name = f'{get_file_name(urlparse(url)[1], "page")}-{get_file_name(old_link)}'
         if file_name.find('.') == -1:
             file_name += '.html'
+        content_url = urljoin(url, old_link)
         with open(os.path.join(files_dir, file_name), 'wb') as file_to_save:
-            file_content = requests.get(urljoin(url, old_link)).content
+            file_content = requests.get(content_url).content
             file_to_save.write(file_content)
         element[index] = f'{files_folder}{file_name}'
     with open(os.path.join(dir_to_save, f'{page_name}.html'), 'w') as page_to_save:
         page_to_save.write(parsed_page.prettify(formatter='html5'))
+
 
 
 def get_file_name(url, file_type='other'):  # TODO: check img length (wikipedia)

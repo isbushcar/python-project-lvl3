@@ -1,6 +1,7 @@
 """Contain main downloader module."""
 
 
+import logging
 import os
 from urllib.parse import urljoin, urlparse
 
@@ -34,7 +35,7 @@ def download(url, path_to_save):
         if file_name.find('.') == -1:
             file_name += '.html'
         with open(os.path.join(files_dir, file_name), 'wb') as file_to_save:
-            file_content = requests.get(url.rstrip('/') + '/' + old_link).content
+            file_content = requests.get(urljoin(url, old_link)).content
             file_to_save.write(file_content)
         element[index] = f'{files_folder}{file_name}'
     with open(os.path.join(dir_to_save, f'{page_name}.html'), 'w') as page_to_save:

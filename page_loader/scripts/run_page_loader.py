@@ -14,8 +14,9 @@ def main():
     )
     parser.add_argument('page_url')
     parser.add_argument('directory_to_save')
+    parser.add_argument('--logging', action='store_true')
     args = parser.parse_args()
-    download(args.page_url, args.directory_to_save)
+    download(args.page_url, args.directory_to_save, args.logging)
 
 
 if __name__ == '__main__':

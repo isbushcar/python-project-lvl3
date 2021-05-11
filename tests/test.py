@@ -1,4 +1,6 @@
 import os
+import pytest
+import requests
 import tempfile
 
 import requests_mock
@@ -34,7 +36,7 @@ def test():
                 response.get(urljoin(test_address, 'courses'), text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(urljoin(test_address, 'packs/js/runtime.js'), text=script.read())
-            download(test_address, dir_to_save)
+            download(test_address, dir_to_save, log=True)
         result_file = os.path.join(dir_to_save, 'ru-hexlet-io-courses.html')
         assert os.path.exists(result_file) is True, 'page should exist'
         with open(result_file) as result_file, open(EXPECTED_PAGE) as expected_page:
@@ -58,3 +60,44 @@ def test():
         runtime_js = os.path.join(files_dir, 'ru-hexlet-io-packs-js-runtime.js')
         with open(runtime_js) as runtime_js, open(EXPECTED_RUNTIME_JS) as expected_runtime_js:
             assert runtime_js.read() == expected_runtime_js.read(), 'runtime.js should be equal'
+        print(os.getcwd())
+        print(os.listdir(os.path.join(tmpdirname, 'test')))
+        assert os.path.exists(os.path.join(tmpdirname, 'page-loader.log'))
+
+  # TODO: test logging
+  # TODO: test OSError - chmod?
+
+
+def test_errors():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        with requests_mock.Mocker() as response:
+            response.get('http://google.com', status_code=301, headers={'Location': 'http://www.google.com/'})
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', tmpdirname)
+            assert 'Page has been moved' in str(exit_info.value)
+            response.get('http://google.com', status_code=404)
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', tmpdirname)
+            assert 'Error while getting page from http://google.com:\n404' in str(exit_info.value)
+            response.get('http://google.com', exc=ConnectionError)
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', tmpdirname)
+            assert 'connect' in str(exit_info.value)
+            response.get('http://google.com', exc=TimeoutError)
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', tmpdirname)
+            assert 'connect' in str(exit_info.value)
+            fixture = os.path.join(CWD, 'tests/fixtures/error_test_page.html')
+            with open(fixture, 'r') as fixture_content:
+                response.get("http://google.com", text=fixture_content.read())
+            response.get('http://google.com/images/python-icon.png', status_code=404)
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', tmpdirname)
+            assert 'Error while getting content from http://google.com/images/python-icon.png:\n404' in str(exit_info.value)
+            with tempfile.TemporaryFile() as not_directory:
+                with pytest.raises(SystemExit) as exit_info:
+                    download('http://google.com', not_directory)
+            assert 'not a directory' in str(exit_info.value)
+            os.chmod
+
+

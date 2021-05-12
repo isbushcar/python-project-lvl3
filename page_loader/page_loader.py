@@ -44,16 +44,17 @@ def make_http_request(url, log=False, dir_to_save=None, is_page=False):  # noqa:
             logging.error(
                 'Page has been moved to {0}'.format(new_loc),
             )
-        sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
-                 f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
-                 f"{'--logging' if log else ''}",  # noqa: WPS326
-                 )
+        #sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
+        #         f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
+        #         f"{'--logging' if log else ''}",  # noqa: WPS326
+        #         )
     if response.status_code != 200:  # noqa: WPS432
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as error:
-            logging.error(error) if log else None
-            sys.exit(f'Error while getting content from {url}:\n{error}')
+        response.raise_for_status()
+        #try:
+        #    response.raise_for_status()
+        #except requests.exceptions.HTTPError as error:
+        #    logging.error(error) if log else None
+        #    sys.exit(f'Error while getting content from {url}:\n{error}')
     return response
 
 

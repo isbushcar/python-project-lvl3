@@ -7,57 +7,85 @@ import sys
 from urllib.error import HTTPError
 from urllib.parse import urljoin, urlparse
 
+from progress.bar import PixelBar as Bar
 import requests
 from bs4 import BeautifulSoup
 
 
-def download(url, path_to_save, log=False):
+def download(url, dir_to_save, log=False):
     """Save internet page to specified directory."""
+    if log is True: # TODO: delete after downloading?
+        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     page_name = get_file_name(url, file_type='page')
-    try:
-        dir_to_save = os.path.join(os.getcwd(), path_to_save)
-    except TypeError as error:
-        logging.error(error)
-        sys.exit(f"Can't write to {path_to_save} - that's not a directory")
-    if log == True: # TODO: delete after downloading?
-        logging.basicConfig(filename=os.path.join(dir_to_save, 'page-loader.log'), level=logging.DEBUG)
-        print('I log')
-        logging.info('test')
-    #if not os.path.exists(dir_to_save):
-     #   os.mkdir(dir_to_save)
+    path_to_save = check_dir(os.path.join(os.getcwd(), dir_to_save), dir_to_save)
     try:
         response = requests.get(url, allow_redirects=False)
     except ConnectionError as error:
-        logging.error(error)
+        logging.error(error) if log is True else None
         sys.exit(f'Error while connecting with {url}:\n{error}')
     except TimeoutError as error:
         logging.error(error)
         sys.exit(f'Error while connecting with {url}:\n{error}')
     if response.status_code == 301:
-        logging.error('Page has been moved to {0}'.format(response.headers['Location']))
-        sys.exit('Page has been moved. Please try:\npage-loader {0} {1}'.format(response.headers['Location'], path_to_save) + (' --logging' if log else ''))
+        logging.error('Page has been moved to {0}'.format(response.headers['Location'])) if log is True else None
+        sys.exit('Page has been moved. Please try:\npage-loader {0} {1}'.format(response.headers['Location'], dir_to_save) + (' --logging' if log else ''))
     if response.status_code != 200:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as error:
-            logging.error(error)
+            logging.error(error) if log is True else None
             sys.exit(f'Error while getting page from {url}:\n{error}')
     parsed_page = BeautifulSoup(response.text, 'html.parser')
-    for element in parsed_page.find_all(['img', 'link', 'script']):
-        if element.name == 'link':
-            index = 'href'
-        else:
-            index = 'src'
+    content = parsed_page.find_all(['img', 'link', 'script'])
+    download_content(content, url, page_name, path_to_save, dir_to_save)
+    with open(os.path.join(path_to_save, f'{page_name}.html'), 'w') as page_to_save:
+        page_to_save.write(parsed_page.prettify(formatter='html5'))
+    print('')
+
+
+def check_dir(path_to_save, dir_to_save):
+    if not os.path.exists(path_to_save):
         try:
-            old_link = element[index].strip('/')
+            os.mkdir(path_to_save)
+        except PermissionError as error:
+            logging.error(error)
+            sys.exit(f'No permission to write in {path_to_save}:\n{error}')
+    try:
+        dir_to_save = os.path.join(os.getcwd(), path_to_save)
+    except NotADirectoryError as error:
+        logging.error(error)
+        sys.exit(f"Can't write to {path_to_save} - that's not a directory")
+    return dir_to_save
+
+
+def download_content(content, url, page_name, dir_to_save, path_to_save):
+    bar = Bar('Processing', max=len(content))
+    attr_list = {
+        'link': 'href',
+        'img': 'src',
+        'script': 'src',
+    }
+    for element in content:
+        attr = attr_list[element.name]
+        try:
+            old_link = element[attr].strip('/')
         except KeyError:
+            bar.next()
             continue
         if urlparse(urljoin(url, old_link))[1] != urlparse(url)[1]:
+            bar.next()
             continue
         files_folder = os.path.join(page_name + '_files/')
         files_dir = os.path.join(dir_to_save, files_folder)
         if not os.path.exists(files_dir):
-            os.mkdir(files_dir)
+            try:
+                os.mkdir(files_dir)
+            except PermissionError as error:
+                logging.error(error)
+                sys.exit(f'No permission to write in {path_to_save}:\n{error}')
+            except NotADirectoryError as error:
+                logging.error(error)
+                sys.exit(f"Can't write to {path_to_save} - that's not a directory")
         file_name = f'{get_file_name(urlparse(url)[1], "page")}-{get_file_name(old_link)}'
         if file_name.find('.') == -1:
             file_name += '.html'
@@ -72,11 +100,8 @@ def download(url, path_to_save, log=False):
         with open(os.path.join(files_dir, file_name), 'wb') as file_to_save:
             file_content = get_file_response.content
             file_to_save.write(file_content)
-        element[index] = f'{files_folder}{file_name}'
-    with open(os.path.join(dir_to_save, f'{page_name}.html'), 'w') as page_to_save:
-        page_to_save.write(parsed_page.prettify(formatter='html5'))
-
-        # TODO: add script to work with exceptions?
+        element[attr] = f'{files_folder}{file_name}'
+        bar.next()
 
 
 def get_file_name(url, file_type='other'):  # TODO: check img length (wikipedia)

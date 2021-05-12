@@ -14,38 +14,47 @@ from bs4 import BeautifulSoup
 
 def download(url, dir_to_save, log=False):
     """Save internet page to specified directory."""
-    if log is True: # TODO: delete after downloading?
+    if log is True:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     page_name = get_file_name(url, file_type='page')
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
-    check_dir(path_to_save)
+    check_dir(path_to_save, log)
+    response = make_http_request(url, log, dir_to_save, is_page=True)
+    parsed_page = BeautifulSoup(response.text, 'html.parser')
+    content = parsed_page.find_all(['img', 'link', 'script'])
+    download_content(content, url, page_name, path_to_save, log)
+    with open(os.path.join(path_to_save, f'{page_name}.html'), 'w') as page_to_save:
+        page_to_save.write(parsed_page.prettify(formatter='html5'))
+    print('')
+
+
+def make_http_request(url, log=False, dir_to_save=None, is_page=False):
+    if log is True:
+        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     try:
         response = requests.get(url, allow_redirects=False)
     except ConnectionError as error:
         logging.error(error) if log is True else None
         sys.exit(f'Error while connecting with {url}:\n{error}')
     except TimeoutError as error:
-        logging.error(error)
+        logging.error(error) if log is True else None
         sys.exit(f'Error while connecting with {url}:\n{error}')
-    if response.status_code == 301:
+    if is_page and response.status_code == 301:
         logging.error('Page has been moved to {0}'.format(response.headers['Location'])) if log is True else None
-        sys.exit('Page has been moved. Please try:\npage-loader {0} {1}'.format(response.headers['Location'], dir_to_save) + (' --logging' if log else ''))
+        sys.exit('Page has been moved to {0}. Please try:\npage-loader {0} {1}'.format(response.headers['Location'], dir_to_save) + (' --logging' if log else ''))
     if response.status_code != 200:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as error:
             logging.error(error) if log is True else None
-            sys.exit(f'Error while getting page from {url}:\n{error}')
-    parsed_page = BeautifulSoup(response.text, 'html.parser')
-    content = parsed_page.find_all(['img', 'link', 'script'])
-    download_content(content, url, page_name, path_to_save, dir_to_save)
-    with open(os.path.join(path_to_save, f'{page_name}.html'), 'w') as page_to_save:
-        page_to_save.write(parsed_page.prettify(formatter='html5'))
-    print('')
+            sys.exit(f'Error while getting content from {url}:\n{error}')
+    return response
 
 
-def check_dir(path_to_save):
+def check_dir(path_to_save, log=False):
     """Check if destination dir exists and add it if it's not."""
+    if log is True:
+        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     if not os.path.exists(path_to_save):
         try:
             os.mkdir(path_to_save)
@@ -63,7 +72,7 @@ def check_dir(path_to_save):
         sys.exit(f"Can't write to {path_to_save} - that's not a directory")
 
 
-def download_content(content, url, page_name, dir_to_save, path_to_save):
+def download_content(content, url, page_name, path_to_save, log=False):
     bar = Bar('Processing', max=len(content))
     attr_list = {
         'link': 'href',
@@ -81,21 +90,15 @@ def download_content(content, url, page_name, dir_to_save, path_to_save):
             bar.next()
             continue
         files_folder = os.path.join(page_name + '_files/')
-        files_dir = os.path.join(dir_to_save, files_folder)
+        files_dir = os.path.join(path_to_save, files_folder)
         check_dir(files_dir)
         file_name = f'{get_file_name(urlparse(url)[1], "page")}-{get_file_name(old_link)}'
         if file_name.find('.') == -1:
             file_name += '.html'
         content_url = urljoin(url, old_link)
-        get_file_response = requests.get(content_url)
-        if get_file_response.status_code != 200:
-            try:
-                get_file_response.raise_for_status()
-            except requests.exceptions.HTTPError as error:
-                logging.error(error)
-                sys.exit(f'Error while getting content from {content_url}:\n{error}')
+        response = make_http_request(content_url)
         with open(os.path.join(files_dir, file_name), 'wb') as file_to_save:
-            file_content = get_file_response.content
+            file_content = response.content
             file_to_save.write(file_content)
         element[attr] = f'{files_folder}{file_name}'
         bar.next()

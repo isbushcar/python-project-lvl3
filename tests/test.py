@@ -67,7 +67,7 @@ def test_errors():
         with requests_mock.Mocker() as response:
             response.get('http://google.com', status_code=301, headers={'Location': 'http://www.google.com/'})
             with pytest.raises(SystemExit) as exit_info:
-                download('http://google.com', tmpdirname)
+                download('http://google.com', tmpdirname, log=True)
             assert 'Page has been moved' in str(exit_info.value)
             response.get('http://google.com', status_code=404)
             with pytest.raises(SystemExit) as exit_info:

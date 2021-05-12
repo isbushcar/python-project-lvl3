@@ -36,7 +36,7 @@ def test():
                 response.get(urljoin(test_address, 'courses'), text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(urljoin(test_address, 'packs/js/runtime.js'), text=script.read())
-            download(test_address, dir_to_save, log=True)
+            download(test_address, dir_to_save)
         result_file = os.path.join(dir_to_save, 'ru-hexlet-io-courses.html')
         assert os.path.exists(result_file) is True, 'page should exist'
         with open(result_file) as result_file, open(EXPECTED_PAGE) as expected_page:
@@ -60,12 +60,6 @@ def test():
         runtime_js = os.path.join(files_dir, 'ru-hexlet-io-packs-js-runtime.js')
         with open(runtime_js) as runtime_js, open(EXPECTED_RUNTIME_JS) as expected_runtime_js:
             assert runtime_js.read() == expected_runtime_js.read(), 'runtime.js should be equal'
-        print(os.getcwd())
-        print(os.listdir(os.path.join(tmpdirname, 'test')))
-        assert os.path.exists(os.path.join(tmpdirname, 'page-loader.log'))
-
-  # TODO: test logging
-  # TODO: test OSError - chmod?
 
 
 def test_errors():
@@ -94,10 +88,15 @@ def test_errors():
             with pytest.raises(SystemExit) as exit_info:
                 download('http://google.com', tmpdirname)
             assert 'Error while getting content from http://google.com/images/python-icon.png:\n404' in str(exit_info.value)
-            with tempfile.TemporaryFile() as not_directory:
+            with tempfile.NamedTemporaryFile() as not_directory:
                 with pytest.raises(SystemExit) as exit_info:
-                    download('http://google.com', not_directory)
+                    download('http://google.com', not_directory.name)
             assert 'not a directory' in str(exit_info.value)
-            os.chmod
-
+            os.chmod(tmpdirname, 444)
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', tmpdirname)
+            assert 'Permission denied' in str(exit_info.value)
+            with pytest.raises(SystemExit) as exit_info:
+                download('http://google.com', os.path.join(tmpdirname, 'test'))
+            assert 'Permission denied' in str(exit_info.value)
 

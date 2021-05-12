@@ -65,38 +65,34 @@ def test():
 def test_errors():
     with tempfile.TemporaryDirectory() as tmpdirname:
         with requests_mock.Mocker() as response:
-            response.get('http://google.com', status_code=301, headers={'Location': 'http://www.google.com/'})
-            with pytest.raises(SystemExit) as exit_info:
-                download('http://google.com', tmpdirname, log=True)
-            assert 'Page has been moved' in str(exit_info.value)
             response.get('http://google.com', status_code=404)
-            with pytest.raises(SystemExit) as exit_info:
+            with pytest.raises(requests.HTTPError) as error:
                 download('http://google.com', tmpdirname)
-            assert 'Error while getting content from http://google.com:\n404' in str(exit_info.value)
+            assert '404' in str(error.value)
             response.get('http://google.com', exc=ConnectionError)
-            with pytest.raises(SystemExit) as exit_info:
+            with pytest.raises(ConnectionError) as error:
                 download('http://google.com', tmpdirname)
-            assert 'connect' in str(exit_info.value)
+            assert 'connect' in str(error.value)
             response.get('http://google.com', exc=TimeoutError)
-            with pytest.raises(SystemExit) as exit_info:
+            with pytest.raises(TimeoutError) as error:
                 download('http://google.com', tmpdirname)
-            assert 'connect' in str(exit_info.value)
+            assert 'connect' in str(error.value)
             fixture = os.path.join(CWD, 'tests/fixtures/error_test_page.html')
             with open(fixture, 'r') as fixture_content:
                 response.get("http://google.com", text=fixture_content.read())
             response.get('http://google.com/images/python-icon.png', status_code=404)
-            with pytest.raises(SystemExit) as exit_info:
+            with pytest.raises(requests.HTTPError) as error:
                 download('http://google.com', tmpdirname)
-            assert 'Error while getting content from http://google.com/images/python-icon.png:\n404' in str(exit_info.value)
+            assert 'Error while getting content from http://google.com/images/python-icon.png:\n404' in str(error.value)
             with tempfile.NamedTemporaryFile() as not_directory:
-                with pytest.raises(SystemExit) as exit_info:
+                with pytest.raises(NotADirectoryError) as error:
                     download('http://google.com', not_directory.name)
-            assert 'not a directory' in str(exit_info.value)
+            assert 'not a directory' in str(error.value)
             os.chmod(tmpdirname, 444)
-            with pytest.raises(SystemExit) as exit_info:
+            with pytest.raises(PermissionError) as error:
                 download('http://google.com', tmpdirname)
-            assert 'Permission denied' in str(exit_info.value)
-            with pytest.raises(SystemExit) as exit_info:
+            assert 'Permission denied' in str(error.value)
+            with pytest.raises(PermissionError) as error:
                 download('http://google.com', os.path.join(tmpdirname, 'test'))
-            assert 'Permission denied' in str(exit_info.value)
+            assert 'Permission denied' in str(error.value)
 

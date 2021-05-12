@@ -18,7 +18,7 @@ def download(url, dir_to_save, log=False):
     page_name = get_file_name(url, file_type='page')
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
     check_dir(path_to_save, log)
-    response = make_http_request(url, log, dir_to_save, is_page=True)
+    response = make_http_request(url, log=log, allow_redirects=False)
     parsed_page = BeautifulSoup(response.text, 'html.parser')
     page_content = parsed_page.find_all(['img', 'link', 'script'])
     download_content(page_content, url, page_name, path_to_save, log)
@@ -26,24 +26,19 @@ def download(url, dir_to_save, log=False):
         page_to_save.write(parsed_page.prettify(formatter='html5'))
 
 
-def make_http_request(url, log=False, dir_to_save=None, is_page=False):  # noqa: E501, WPS213, WPS231
+def make_http_request(url, log=False, allow_redirects=True):  # noqa: E501, WPS213, WPS231
     """Request content and handle exceptions."""
     if log:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
-    try:
-        response = requests.get(url, allow_redirects=False)
-    except ConnectionError as error:
-        logging.error(error) if log else None
-        sys.exit(f'Error while connecting with {url}:\n{error}')
-    except TimeoutError as error:
-        logging.error(error) if log else None
-        sys.exit(f'Error while connecting with {url}:\n{error}')
-    if is_page and response.status_code == 301:  # noqa: WPS432
-        new_loc = response.headers['Location']
-        if log:
-            logging.error(
-                'Page has been moved to {0}'.format(new_loc),
-            )
+    response = requests.get(url, allow_redirects=allow_redirects)
+    #try:
+    #    response = requests.get(url, allow_redirects=allow_redirects)
+    #except ConnectionError as error:
+    #    logging.error(error) if log else None
+    #    sys.exit(f'Error while connecting with {url}:\n{error}')
+    #except TimeoutError as error:
+    #    logging.error(error) if log else None
+    #    sys.exit(f'Error while connecting with {url}:\n{error}')
         # sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
         #          f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
         #          f"{'--logging' if log else ''}",  # noqa: WPS326
@@ -84,6 +79,7 @@ def check_dir(path_to_save, log=False):
 
 def download_content(page_content, url, page_name, path_to_save, log=False):
     """Download content and correct it's link in parsed page."""
+    url = url.strip('/')
     if log:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     progress_bar = PixelBar('Processing', max=len(page_content))

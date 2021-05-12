@@ -17,7 +17,8 @@ def download(url, dir_to_save, log=False):
     if log is True: # TODO: delete after downloading?
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     page_name = get_file_name(url, file_type='page')
-    path_to_save = check_dir(os.path.join(os.getcwd(), dir_to_save), dir_to_save)
+    path_to_save = os.path.join(os.getcwd(), dir_to_save)
+    check_dir(path_to_save)
     try:
         response = requests.get(url, allow_redirects=False)
     except ConnectionError as error:
@@ -43,19 +44,23 @@ def download(url, dir_to_save, log=False):
     print('')
 
 
-def check_dir(path_to_save, dir_to_save):
+def check_dir(path_to_save):
+    """Check if destination dir exists and add it if it's not."""
     if not os.path.exists(path_to_save):
         try:
             os.mkdir(path_to_save)
         except PermissionError as error:
             logging.error(error)
             sys.exit(f'No permission to write in {path_to_save}:\n{error}')
+        except NotADirectoryError as error:
+            logging.error(error)
+            sys.exit(f"Can't write to {path_to_save} - that's not a directory")
     try:
-        dir_to_save = os.path.join(os.getcwd(), path_to_save)
+        if not os.path.isdir(path_to_save):
+            raise NotADirectoryError
     except NotADirectoryError as error:
         logging.error(error)
         sys.exit(f"Can't write to {path_to_save} - that's not a directory")
-    return dir_to_save
 
 
 def download_content(content, url, page_name, dir_to_save, path_to_save):
@@ -77,15 +82,7 @@ def download_content(content, url, page_name, dir_to_save, path_to_save):
             continue
         files_folder = os.path.join(page_name + '_files/')
         files_dir = os.path.join(dir_to_save, files_folder)
-        if not os.path.exists(files_dir):
-            try:
-                os.mkdir(files_dir)
-            except PermissionError as error:
-                logging.error(error)
-                sys.exit(f'No permission to write in {path_to_save}:\n{error}')
-            except NotADirectoryError as error:
-                logging.error(error)
-                sys.exit(f"Can't write to {path_to_save} - that's not a directory")
+        check_dir(files_dir)
         file_name = f'{get_file_name(urlparse(url)[1], "page")}-{get_file_name(old_link)}'
         if file_name.find('.') == -1:
             file_name += '.html'

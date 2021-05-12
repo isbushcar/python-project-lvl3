@@ -95,13 +95,15 @@ def download_content(page_content, url, page_name, path_to_save, log=False):
         except KeyError:
             progress_bar.next()
             continue
-        if urlparse(urljoin(url, old_link))[1] != urlparse(url)[1]:
+        if urlparse(urljoin(url, old_link))[1] != urlparse(url)[1]:  # noqa: WPS221, E501
             progress_bar.next()
             continue
         files_folder = os.path.join(page_name + '_files/')
         files_dir = os.path.join(path_to_save, files_folder)
         check_dir(files_dir)
-        file_name = f'{get_file_name(urlparse(url)[1], "page")}-{get_file_name(old_link)}'
+        file_name = get_file_name(urlparse(url)[1], 'page') + (
+            f'-{get_file_name(old_link)}'  # noqa: WPS237
+        )
         if file_name.find('.') == -1:
             file_name += '.html'
         content_url = urljoin(url, old_link)

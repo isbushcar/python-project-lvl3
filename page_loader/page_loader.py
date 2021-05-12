@@ -44,17 +44,17 @@ def make_http_request(url, log=False, dir_to_save=None, is_page=False):  # noqa:
             logging.error(
                 'Page has been moved to {0}'.format(new_loc),
             )
-        #sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
-        #         f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
-        #         f"{'--logging' if log else ''}",  # noqa: WPS326
-        #         )
+        # sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
+        #          f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
+        #          f"{'--logging' if log else ''}",  # noqa: WPS326
+        #          )
     if response.status_code != 200:  # noqa: WPS432
         response.raise_for_status()
-        #try:
-        #    response.raise_for_status()
-        #except requests.exceptions.HTTPError as error:
-        #    logging.error(error) if log else None
-        #    sys.exit(f'Error while getting content from {url}:\n{error}')
+        # try:
+        #     response.raise_for_status()
+        # except requests.exceptions.HTTPError as error:
+        #     logging.error(error) if log else None
+        #     sys.exit(f'Error while getting content from {url}:\n{error}')
     return response
 
 
@@ -63,20 +63,23 @@ def check_dir(path_to_save, log=False):
     if log:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     if not os.path.exists(path_to_save):
-        try:
-            os.mkdir(path_to_save)
-        except PermissionError as error:
-            logging.error(error)
-            sys.exit(f'No permission to write in {path_to_save}:\n{error}')
-        except NotADirectoryError as error:
-            logging.error(error)
-            sys.exit(f"Can't write to {path_to_save} - that's not a directory")
-    try:
-        if not os.path.isdir(path_to_save):
-            raise NotADirectoryError
-    except NotADirectoryError as error:
-        logging.error(error)
-        sys.exit(f"Can't write to {path_to_save} - that's not a directory")
+        os.mkdir(path_to_save)
+        # try:
+        #     os.mkdir(path_to_save)
+        # except PermissionError as error:
+        #     logging.error(error)
+        #     sys.exit(f'No permission to write in {path_to_save}:\n{error}')
+        # except NotADirectoryError as error:
+        #     logging.error(error)
+        #     sys.exit(f"Can't write to {path_to_save} - that's not a directory")
+    if not os.path.isdir(path_to_save):
+        raise NotADirectoryError
+    # try:
+    #     if not os.path.isdir(path_to_save):
+    #         raise NotADirectoryError
+    # except NotADirectoryError as error:
+    #     logging.error(error)
+    #     sys.exit(f"Can't write to {path_to_save} - that's not a directory")
 
 
 def download_content(page_content, url, page_name, path_to_save, log=False):

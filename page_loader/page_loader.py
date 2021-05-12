@@ -4,56 +4,62 @@
 import logging
 import os
 import sys
-from urllib.error import HTTPError
 from urllib.parse import urljoin, urlparse
 
-from progress.bar import PixelBar as Bar
 import requests
 from bs4 import BeautifulSoup
+from progress.bar import PixelBar
 
 
 def download(url, dir_to_save, log=False):
     """Save internet page to specified directory."""
-    if log is True:
+    if log:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     page_name = get_file_name(url, file_type='page')
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
     check_dir(path_to_save, log)
     response = make_http_request(url, log, dir_to_save, is_page=True)
     parsed_page = BeautifulSoup(response.text, 'html.parser')
-    content = parsed_page.find_all(['img', 'link', 'script'])
-    download_content(content, url, page_name, path_to_save, log)
-    with open(os.path.join(path_to_save, f'{page_name}.html'), 'w') as page_to_save:
+    page_content = parsed_page.find_all(['img', 'link', 'script'])
+    download_content(page_content, url, page_name, path_to_save, log)
+    with open(os.path.join(path_to_save, f'{page_name}.html'), 'w') as page_to_save:  # noqa: E501
         page_to_save.write(parsed_page.prettify(formatter='html5'))
-    print('')
 
 
-def make_http_request(url, log=False, dir_to_save=None, is_page=False):
-    if log is True:
+def make_http_request(url, log=False, dir_to_save=None, is_page=False):  # noqa: E501, WPS213, WPS231
+    """Request content and handle exceptions."""
+    if log:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     try:
         response = requests.get(url, allow_redirects=False)
     except ConnectionError as error:
-        logging.error(error) if log is True else None
+        logging.error(error) if log else None
         sys.exit(f'Error while connecting with {url}:\n{error}')
     except TimeoutError as error:
-        logging.error(error) if log is True else None
+        logging.error(error) if log else None
         sys.exit(f'Error while connecting with {url}:\n{error}')
-    if is_page and response.status_code == 301:
-        logging.error('Page has been moved to {0}'.format(response.headers['Location'])) if log is True else None
-        sys.exit('Page has been moved to {0}. Please try:\npage-loader {0} {1}'.format(response.headers['Location'], dir_to_save) + (' --logging' if log else ''))
-    if response.status_code != 200:
+    if is_page and response.status_code == 301:  # noqa: WPS432
+        new_loc = response.headers['Location']
+        if log:
+            logging.error(
+                'Page has been moved to {0}'.format(new_loc),
+            )
+        sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
+                 f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
+                 f"{'--logging' if log else ''}",  # noqa: WPS326
+                 )
+    if response.status_code != 200:  # noqa: WPS432
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as error:
-            logging.error(error) if log is True else None
+            logging.error(error) if log else None
             sys.exit(f'Error while getting content from {url}:\n{error}')
     return response
 
 
 def check_dir(path_to_save, log=False):
     """Check if destination dir exists and add it if it's not."""
-    if log is True:
+    if log:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     if not os.path.exists(path_to_save):
         try:
@@ -72,22 +78,25 @@ def check_dir(path_to_save, log=False):
         sys.exit(f"Can't write to {path_to_save} - that's not a directory")
 
 
-def download_content(content, url, page_name, path_to_save, log=False):
-    bar = Bar('Processing', max=len(content))
-    attr_list = {
-        'link': 'href',
-        'img': 'src',
-        'script': 'src',
-    }
-    for element in content:
+def download_content(page_content, url, page_name, path_to_save, log=False):
+    """Download content and correct it's link in parsed page."""
+    if log:
+        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
+    progress_bar = PixelBar('Processing', max=len(page_content))
+    for element in page_content:
+        attr_list = {
+            'link': 'href',
+            'img': 'src',
+            'script': 'src',
+        }
         attr = attr_list[element.name]
         try:
             old_link = element[attr].strip('/')
         except KeyError:
-            bar.next()
+            progress_bar.next()
             continue
         if urlparse(urljoin(url, old_link))[1] != urlparse(url)[1]:
-            bar.next()
+            progress_bar.next()
             continue
         files_folder = os.path.join(page_name + '_files/')
         files_dir = os.path.join(path_to_save, files_folder)
@@ -101,10 +110,11 @@ def download_content(content, url, page_name, path_to_save, log=False):
             file_content = response.content
             file_to_save.write(file_content)
         element[attr] = f'{files_folder}{file_name}'
-        bar.next()
+        progress_bar.next()
+    progress_bar.finish()
 
 
-def get_file_name(url, file_type='other'):  # TODO: check img length (wikipedia)
+def get_file_name(url, file_type='other'):
     """Return file name that depends on it's url."""
     parsed_url = list(urlparse(url))
     parsed_url.pop(0)
@@ -112,8 +122,4 @@ def get_file_name(url, file_type='other'):  # TODO: check img length (wikipedia)
     file_name = file_name.replace('/', '-')
     if file_type == 'page':
         file_name = file_name.replace('.', '-')
-    # if file_name.find('.') == -1:  # TODO: check if redundant
-    #     file_name = f'{file_name}.jpg'
-    # if len(file_name) > 200:
-    #     return file_name[len(file_name) - 200:]
     return file_name.strip('-')

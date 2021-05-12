@@ -72,7 +72,7 @@ def test_errors():
             response.get('http://google.com', status_code=404)
             with pytest.raises(SystemExit) as exit_info:
                 download('http://google.com', tmpdirname)
-            assert 'Error while getting page from http://google.com:\n404' in str(exit_info.value)
+            assert 'Error while getting content from http://google.com:\n404' in str(exit_info.value)
             response.get('http://google.com', exc=ConnectionError)
             with pytest.raises(SystemExit) as exit_info:
                 download('http://google.com', tmpdirname)

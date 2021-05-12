@@ -40,13 +40,10 @@ def make_http_request(url, log=False, dir_to_save=None, is_page=False):  # noqa:
         sys.exit(f'Error while connecting with {url}:\n{error}')
     if is_page and response.status_code == 301:  # noqa: WPS432
         new_loc = response.headers['Location']
-        try:
-            raise requests.exceptions.HTTPError
-        except requests.exceptions.HTTPError:
-            if log:
-                logging.error(
-                    'Page has been moved to {0}'.format(new_loc),
-                )
+        if log:
+            logging.error(
+                'Page has been moved to {0}'.format(new_loc),
+            )
         sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
                  f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
                  f"{'--logging' if log else ''}",  # noqa: WPS326

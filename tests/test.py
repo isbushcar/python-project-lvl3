@@ -18,7 +18,7 @@ EXPECTED_RUNTIME_JS = os.path.join(CWD, 'tests/fixtures/scripts/runtime.js')
 
 
 def test():
-    test_address = 'https://ru.hexlet.io/courses/'
+    test_address = 'https://ru.hexlet.io/courses'
     with tempfile.TemporaryDirectory() as tmpdirname:
         dir_to_save = os.path.join(tmpdirname, 'test')
         fixture = os.path.join(CWD, 'tests/fixtures/test-page.html')
@@ -32,8 +32,6 @@ def test():
             with open(os.path.join(CWD, EXPECTED_APPLICATION_CSS), 'r') as link:
                 response.get(urljoin(test_address, 'assets/application.css'), text=link.read())
                 response.get('https://cdn2.hexlet.io/assets/menu.css', text=link.read())
-            with open(os.path.join(CWD, EXPECTED_COURSES_HTML), 'r') as link:
-                response.get(urljoin(test_address, 'courses'), text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(urljoin(test_address, 'packs/js/runtime.js'), text=script.read())
             download(test_address, dir_to_save)
@@ -70,24 +68,21 @@ def test_errors():
                 download('http://google.com', tmpdirname)
             assert '404' in str(error.value)
             response.get('http://google.com', exc=ConnectionError)
-            with pytest.raises(ConnectionError) as error:
+            with pytest.raises(ConnectionError):
                 download('http://google.com', tmpdirname)
-            assert 'connect' in str(error.value)
             response.get('http://google.com', exc=TimeoutError)
-            with pytest.raises(TimeoutError) as error:
+            with pytest.raises(TimeoutError):
                 download('http://google.com', tmpdirname)
-            assert 'connect' in str(error.value)
             fixture = os.path.join(CWD, 'tests/fixtures/error_test_page.html')
             with open(fixture, 'r') as fixture_content:
                 response.get("http://google.com", text=fixture_content.read())
             response.get('http://google.com/images/python-icon.png', status_code=404)
             with pytest.raises(requests.HTTPError) as error:
                 download('http://google.com', tmpdirname)
-            assert 'Error while getting content from http://google.com/images/python-icon.png:\n404' in str(error.value)
+            assert '404' in str(error.value)
             with tempfile.NamedTemporaryFile() as not_directory:
-                with pytest.raises(NotADirectoryError) as error:
+                with pytest.raises(NotADirectoryError):
                     download('http://google.com', not_directory.name)
-            assert 'not a directory' in str(error.value)
             os.chmod(tmpdirname, 444)
             with pytest.raises(PermissionError) as error:
                 download('http://google.com', tmpdirname)
@@ -95,4 +90,3 @@ def test_errors():
             with pytest.raises(PermissionError) as error:
                 download('http://google.com', os.path.join(tmpdirname, 'test'))
             assert 'Permission denied' in str(error.value)
-

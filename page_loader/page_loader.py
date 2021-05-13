@@ -26,6 +26,7 @@ def download(url, dir_to_save):
         download_content(page_content, url, files_dir)
     page_path = os.path.join(path_to_save, f'{page_name}.html')
     write_file(page_path, parsed_page.prettify(formatter='html5'))
+    return page_path
 
 
 def make_http_request(url, allow_redirects=True):

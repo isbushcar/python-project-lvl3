@@ -1,9 +1,7 @@
 """Contain main downloader module."""
 
 
-import logging
 import os
-import sys
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -11,117 +9,103 @@ from bs4 import BeautifulSoup
 from progress.bar import PixelBar
 
 
-def download(url, dir_to_save, log=False):
+def download(url, dir_to_save):
     """Save internet page to specified directory."""
-    if log:
-        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
-    page_name = get_file_name(url, file_type='page')
+    page_name = get_page_name(url)
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
-    check_dir(path_to_save, log)
-    response = make_http_request(url, log=log, allow_redirects=False)
+    check_dir(path_to_save)
+    response = make_http_request(url, allow_redirects=False)
+    while response.status_code != 200:  # noqa: WPS432
+        url = response.headers['Location']
+        response = make_http_request(url, allow_redirects=False)
     parsed_page = BeautifulSoup(response.text, 'html.parser')
     page_content = parsed_page.find_all(['img', 'link', 'script'])
-    download_content(page_content, url, page_name, path_to_save, log)
-    with open(os.path.join(path_to_save, f'{page_name}.html'), 'w') as page_to_save:  # noqa: E501
-        page_to_save.write(parsed_page.prettify(formatter='html5'))
+    if page_content:
+        files_dir = os.path.join(path_to_save, f'{page_name}_files')
+        check_dir(files_dir)
+        download_content(page_content, url, files_dir)
+    page_path = os.path.join(path_to_save, f'{page_name}.html')
+    write_file(page_path, parsed_page.prettify(formatter='html5'))
 
 
-def make_http_request(url, log=False, allow_redirects=True):  # noqa: E501, WPS213, WPS231
-    """Request content and handle exceptions."""
-    if log:
-        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
+def make_http_request(url, allow_redirects=True):
+    """Request content and raise exception if something went wrong."""
     response = requests.get(url, allow_redirects=allow_redirects)
-    #try:
-    #    response = requests.get(url, allow_redirects=allow_redirects)
-    #except ConnectionError as error:
-    #    logging.error(error) if log else None
-    #    sys.exit(f'Error while connecting with {url}:\n{error}')
-    #except TimeoutError as error:
-    #    logging.error(error) if log else None
-    #    sys.exit(f'Error while connecting with {url}:\n{error}')
-        # sys.exit(f'Page has been moved to {new_loc}. Please try:\n'  # noqa: WPS221, WPS237, E501
-        #          f'page-loader {new_loc} {dir_to_save}'  # noqa: WPS318, WPS326
-        #          f"{'--logging' if log else ''}",  # noqa: WPS326
-        #          )
     if response.status_code != 200:  # noqa: WPS432
         response.raise_for_status()
-        # try:
-        #     response.raise_for_status()
-        # except requests.exceptions.HTTPError as error:
-        #     logging.error(error) if log else None
-        #     sys.exit(f'Error while getting content from {url}:\n{error}')
     return response
 
 
-def check_dir(path_to_save, log=False):
+def check_dir(path_to_save):
     """Check if destination dir exists and add it if it's not."""
-    if log:
-        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     if not os.path.exists(path_to_save):
         os.mkdir(path_to_save)
-        # try:
-        #     os.mkdir(path_to_save)
-        # except PermissionError as error:
-        #     logging.error(error)
-        #     sys.exit(f'No permission to write in {path_to_save}:\n{error}')
-        # except NotADirectoryError as error:
-        #     logging.error(error)
-        #     sys.exit(f"Can't write to {path_to_save} - that's not a directory")
     if not os.path.isdir(path_to_save):
-        raise NotADirectoryError
-    # try:
-    #     if not os.path.isdir(path_to_save):
-    #         raise NotADirectoryError
-    # except NotADirectoryError as error:
-    #     logging.error(error)
-    #     sys.exit(f"Can't write to {path_to_save} - that's not a directory")
+        error_msg = f"Can't write to {path_to_save} - that's not a directory"
+        raise NotADirectoryError(error_msg)
 
 
-def download_content(page_content, url, page_name, path_to_save, log=False):
+def download_content(page_content, page_url, files_dir):
     """Download content and correct it's link in parsed page."""
-    url = url.strip('/')
-    if log:
-        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
+    page_url = page_url.strip('/')
+    attr_list = {
+        'link': 'href',
+        'img': 'src',
+        'script': 'src',
+    }
     progress_bar = PixelBar('Processing', max=len(page_content))
     for element in page_content:
-        attr_list = {
-            'link': 'href',
-            'img': 'src',
-            'script': 'src',
-        }
         attr = attr_list[element.name]
         try:
-            old_link = element[attr].strip('/')
+            old_content_url = element[attr].strip('/')
         except KeyError:
             progress_bar.next()
             continue
-        if urlparse(urljoin(url, old_link))[1] != urlparse(url)[1]:  # noqa: WPS221, E501
+        content_url = urljoin(page_url, old_content_url)
+        if urlparse(content_url)[1] != urlparse(page_url)[1]:
             progress_bar.next()
             continue
-        files_folder = os.path.join(page_name + '_files/')
-        files_dir = os.path.join(path_to_save, files_folder)
-        check_dir(files_dir)
-        file_name = get_file_name(urlparse(url)[1], 'page') + (
-            f'-{get_file_name(old_link)}'  # noqa: WPS237
-        )
-        if file_name.find('.') == -1:
-            file_name += '.html'
-        content_url = urljoin(url, old_link)
+        file_name = get_file_name(content_url)
         response = make_http_request(content_url)
-        with open(os.path.join(files_dir, file_name), 'wb') as file_to_save:
-            file_content = response.content
-            file_to_save.write(file_content)
-        element[attr] = f'{files_folder}{file_name}'
+        write_file(
+            os.path.join(files_dir, file_name),
+            response.content,
+            binary=True,
+        )
+        element[attr] = f'{os.path.split(files_dir)[1]}/{file_name}'  # noqa: WPS221, WPS237, E501
         progress_bar.next()
     progress_bar.finish()
 
 
-def get_file_name(url, file_type='other'):
-    """Return file name that depends on it's url."""
-    parsed_url = list(urlparse(url))
+def get_file_name(content_url):
+    """Return file's name that depends on it's url."""
+    parsed_url = list(urlparse(content_url))
     parsed_url.pop(0)
     file_name = ''.join(list(filter(None, parsed_url)))
-    file_name = file_name.replace('/', '-')
-    if file_type == 'page':
-        file_name = file_name.replace('.', '-')
-    return file_name.strip('-')
+    path_to_file = os.path.split(file_name)[0]
+    file_name = os.path.split(file_name)[1]
+    path_to_file = path_to_file.replace('/', '-')
+    path_to_file = path_to_file.replace('.', '-')
+    if file_name.find('.') == -1:
+        file_name = f'{file_name}.html'
+    return f'{path_to_file}-{file_name}'.strip('-')
+
+
+def get_page_name(url):
+    """Return page's name that depends on it's url."""
+    parsed_url = list(urlparse(url))
+    parsed_url.pop(0)
+    page_name = ''.join(list(filter(None, parsed_url)))
+    page_name = page_name.replace('/', '-')
+    page_name = page_name.replace('.', '-')
+    return page_name.strip('-')
+
+
+def write_file(file_path, file_content, binary=False):
+    """Write content to new file."""
+    if binary:
+        with open(file_path, 'wb') as file_to_save:
+            file_to_save.write(file_content)
+    else:
+        with open(file_path, 'w') as file_to_save:  # noqa: WPS440
+            file_to_save.write(file_content)

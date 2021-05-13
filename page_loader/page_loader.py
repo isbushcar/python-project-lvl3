@@ -13,13 +13,13 @@ from progress.bar import PixelBar
 
 def download(url, dir_to_save):
     """Save internet page to specified directory."""
-    page_name = get_page_name(url)
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
     check_dir(path_to_save)
     response = make_http_request(url, allow_redirects=False)
     while response.status_code != 200:  # noqa: WPS432
         url = response.headers['Location']
         response = make_http_request(url, allow_redirects=False)
+    page_name = get_page_name(url)
     parsed_page = BeautifulSoup(response.text, 'html.parser')
     page_content = parsed_page.find_all(['img', 'link', 'script'])
     if page_content:
@@ -41,7 +41,6 @@ def make_http_request(url, allow_redirects=True):
 
 def download_content(page_content, page_url, files_dir):
     """Download content and correct it's link in parsed page."""
-    page_url = page_url.strip('/')
     attr_list = {
         'link': 'href',
         'img': 'src',
@@ -51,7 +50,7 @@ def download_content(page_content, page_url, files_dir):
     for element in page_content:
         attr = attr_list[element.name]
         try:
-            old_content_url = element[attr].strip('/')
+            old_content_url = element[attr]
         except KeyError:
             progress_bar.next()
             continue

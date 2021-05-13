@@ -2,7 +2,7 @@
 
 
 import os
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -11,7 +11,6 @@ from progress.bar import PixelBar
 
 def download(url, dir_to_save):
     """Save internet page to specified directory."""
-    url = url.strip('/')
     page_name = get_page_name(url)
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
     check_dir(path_to_save)
@@ -62,7 +61,8 @@ def download_content(page_content, page_url, files_dir):
         except KeyError:
             progress_bar.next()
             continue
-        content_url = urljoin(page_url, old_content_url)
+        content_url = get_content_url(page_url, old_content_url)
+
         if urlparse(content_url)[1] != urlparse(page_url)[1]:
             progress_bar.next()
             continue
@@ -110,3 +110,9 @@ def write_file(file_path, file_content, binary=False):
     else:
         with open(file_path, 'w') as file_to_save:  # noqa: WPS440
             file_to_save.write(file_content)
+
+
+def get_content_url(page_url, old_content_url):
+    parsed_page_url = list(urlparse(page_url))
+    parsed_page_url[2] = ''
+    return urljoin(urlunparse(parsed_page_url), old_content_url)

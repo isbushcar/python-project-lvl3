@@ -13,11 +13,24 @@ from page_loader import download
 def parse_args():
     """Return parsed args."""
     parser = argparse.ArgumentParser(
-        prog='page-loader', description='Download web-page',
+        prog='page-loader',
+        description='Download web-page',
+        usage='page-loader [options] <url>',
     )
     parser.add_argument('page_url')
-    parser.add_argument('directory_to_save')
-    parser.add_argument('--logging', action='store_true')
+    parser.add_argument(
+        '-o --output',
+        default='/app',
+        help='output dir (default: "app")',
+        metavar='[dir]',
+        dest='output'
+    )
+    parser.add_argument(
+        '--logging',
+        action='store_true',
+        help='log will be saved to page-loader.log',
+    )
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s 0.5.0')  # noqa: WPS323, E501
     return parser.parse_args()
 
 
@@ -29,7 +42,7 @@ def main():  # noqa: C901
     if args.logging:
         logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
     try:  # noqa: WPS225
-        download(args.page_url, args.directory_to_save)
+        print(f"Page was successfully downloaded into '{download(args.page_url, args.output)}'")  # noqa: WPS237, WPS421, E501
     except (requests.ConnectionError, TimeoutError):
         error_message = 'Error while connecting. Please check URI and your internet connection.'  # noqa: E501
     except requests.HTTPError:

@@ -6,6 +6,8 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
+from page_loader.file_system_worker import check_dir, write_file
+from page_loader.name_formatters import get_file_name, get_page_name
 from progress.bar import PixelBar
 
 
@@ -22,7 +24,7 @@ def download(url, dir_to_save):
     page_content = parsed_page.find_all(['img', 'link', 'script'])
     if page_content:
         files_dir = os.path.join(path_to_save, f'{page_name}_files')
-        check_dir(files_dir)
+        check_dir(files_dir, to_add=True)
         download_content(page_content, url, files_dir)
     page_path = os.path.join(path_to_save, f'{page_name}.html')
     write_file(page_path, parsed_page.prettify(formatter='html5'))
@@ -35,15 +37,6 @@ def make_http_request(url, allow_redirects=True):
     if response.status_code != 200:  # noqa: WPS432
         response.raise_for_status()
     return response
-
-
-def check_dir(path_to_save):
-    """Check if destination dir exists and add it if it's not."""
-    if not os.path.exists(path_to_save):
-        os.mkdir(path_to_save)
-    if not os.path.isdir(path_to_save):
-        error_msg = f"Can't write to {path_to_save} - that's not a directory"
-        raise NotADirectoryError(error_msg)
 
 
 def download_content(page_content, page_url, files_dir):
@@ -63,7 +56,6 @@ def download_content(page_content, page_url, files_dir):
             progress_bar.next()
             continue
         content_url = get_content_url(page_url, old_content_url)
-
         if urlparse(content_url)[1] != urlparse(page_url)[1]:
             progress_bar.next()
             continue
@@ -79,41 +71,8 @@ def download_content(page_content, page_url, files_dir):
     progress_bar.finish()
 
 
-def get_file_name(content_url):
-    """Return file's name that depends on it's url."""
-    parsed_url = list(urlparse(content_url))
-    parsed_url.pop(0)
-    file_name = ''.join(list(filter(None, parsed_url)))
-    path_to_file = os.path.split(file_name)[0]
-    file_name = os.path.split(file_name)[1]
-    path_to_file = path_to_file.replace('/', '-')
-    path_to_file = path_to_file.replace('.', '-')
-    if file_name.find('.') == -1:
-        file_name = f'{file_name}.html'
-    return f'{path_to_file}-{file_name}'.strip('-')
-
-
-def get_page_name(url):
-    """Return page's name that depends on it's url."""
-    parsed_url = list(urlparse(url))
-    parsed_url.pop(0)
-    page_name = ''.join(list(filter(None, parsed_url)))
-    page_name = page_name.replace('/', '-')
-    page_name = page_name.replace('.', '-')
-    return page_name.strip('-')
-
-
-def write_file(file_path, file_content, binary=False):
-    """Write content to new file."""
-    if binary:
-        with open(file_path, 'wb') as file_to_save:
-            file_to_save.write(file_content)
-    else:
-        with open(file_path, 'w') as file_to_save:  # noqa: WPS440
-            file_to_save.write(file_content)
-
-
 def get_content_url(page_url, old_content_url):
+    """Return correct content's URL."""
     parsed_page_url = list(urlparse(page_url))
     parsed_page_url[2] = ''
     return urljoin(urlunparse(parsed_page_url), old_content_url)

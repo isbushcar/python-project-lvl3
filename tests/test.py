@@ -20,7 +20,6 @@ EXPECTED_RUNTIME_JS = os.path.join(CWD, 'tests/fixtures/scripts/runtime.js')
 def test():
     test_address = 'https://ru.hexlet.io/courses'
     with tempfile.TemporaryDirectory() as tmpdirname:
-        dir_to_save = os.path.join(tmpdirname, 'test')
         fixture = os.path.join(CWD, 'tests/fixtures/test-page.html')
         with requests_mock.Mocker() as response:
             with open(fixture, 'r') as fixture_content:
@@ -34,12 +33,12 @@ def test():
                 response.get('https://cdn2.hexlet.io/assets/menu.css', text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(urljoin(test_address, 'packs/js/runtime.js'), text=script.read())
-            download(test_address, dir_to_save)
-        result_file = os.path.join(dir_to_save, 'ru-hexlet-io-courses.html')
+            download(test_address, tmpdirname)
+        result_file = os.path.join(tmpdirname, 'ru-hexlet-io-courses.html')
         assert os.path.exists(result_file) is True, 'page should exist'
         with open(result_file) as result_file, open(EXPECTED_PAGE) as expected_page:
             assert result_file.read() == expected_page.read(), 'page should be equal'
-        files_dir = os.path.join(dir_to_save, 'ru-hexlet-io-courses_files/')
+        files_dir = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/')
 
         def content_exists(name):
             return os.path.exists(os.path.join(files_dir, name))
@@ -87,6 +86,6 @@ def test_errors():
             with pytest.raises(PermissionError) as error:
                 download('http://google.com', tmpdirname)
             assert 'Permission denied' in str(error.value)
-            with pytest.raises(PermissionError) as error:
+            with pytest.raises(NotADirectoryError) as error:
                 download('http://google.com', os.path.join(tmpdirname, 'test'))
-            assert 'Permission denied' in str(error.value)
+            assert 'No directory' in str(error.value)

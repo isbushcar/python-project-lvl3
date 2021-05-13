@@ -33,7 +33,8 @@ def test():
                 response.get('https://cdn2.hexlet.io/assets/menu.css', text=link.read())
             with open(os.path.join(CWD, EXPECTED_RUNTIME_JS), 'r') as script:
                 response.get(urljoin(test_address, 'packs/js/runtime.js'), text=script.read())
-            download(test_address, tmpdirname)
+            response.get('http://google.com', status_code=301, headers={'Location': test_address})
+            download('http://google.com', tmpdirname)
         result_file = os.path.join(tmpdirname, 'ru-hexlet-io-courses.html')
         assert os.path.exists(result_file) is True, 'page should exist'
         with open(result_file) as result_file, open(EXPECTED_PAGE) as expected_page:

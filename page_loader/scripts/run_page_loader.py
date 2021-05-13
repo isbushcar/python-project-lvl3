@@ -23,7 +23,7 @@ def parse_args():
         default='/app',
         help='output dir (default: "app")',
         metavar='[dir]',
-        dest='output'
+        dest='output',
     )
     parser.add_argument(
         '--logging',

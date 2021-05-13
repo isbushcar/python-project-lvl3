@@ -11,6 +11,7 @@ from progress.bar import PixelBar
 
 def download(url, dir_to_save):
     """Save internet page to specified directory."""
+    url = url.strip('/')
     page_name = get_page_name(url)
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
     check_dir(path_to_save)

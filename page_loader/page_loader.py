@@ -1,6 +1,7 @@
 """Contain main downloader module."""
 
 
+import logging
 import os
 from urllib.parse import urljoin, urlparse, urlunparse
 
@@ -33,9 +34,11 @@ def download(url, dir_to_save):
 
 def make_http_request(url, allow_redirects=True):
     """Request content and raise exception if something went wrong."""
+    logging.info(f'Requesting {url}')
     response = requests.get(url, allow_redirects=allow_redirects)
     if response.status_code != 200:  # noqa: WPS432
         response.raise_for_status()
+    logging.info(f'Got response from {url}')
     return response
 
 

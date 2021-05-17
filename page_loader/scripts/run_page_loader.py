@@ -45,7 +45,11 @@ def main():  # noqa: C901
     error_message = ''
     logging_offer = "\nFor more details please use '--logging' flag and check page-loader.log"  # noqa: E501
     if args.logging:
-        logging.basicConfig(filename='page-loader.log', level=logging.DEBUG)
+        logging.basicConfig(
+            filename='page-loader.log',
+            format='%(levelname)s:%(message)s',  # noqa: WPS323
+            level=logging.INFO,
+        )
     try:  # noqa: WPS225
         print(f"Page was successfully downloaded into '{download(args.page_url, args.output)}'")  # noqa: WPS237, WPS421, E501
     except (requests.ConnectionError, TimeoutError):

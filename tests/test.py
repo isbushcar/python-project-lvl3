@@ -15,6 +15,18 @@ EXPECTED_IMAGE2 = os.path.join(CWD, 'tests/fixtures/images/python-icon2.png')
 EXPECTED_APPLICATION_CSS = os.path.join(CWD, 'tests/fixtures/links/application.css')
 EXPECTED_COURSES_HTML = os.path.join(CWD, 'tests/fixtures/links/courses.html')
 EXPECTED_RUNTIME_JS = os.path.join(CWD, 'tests/fixtures/scripts/runtime.js')
+EXPECTED_CONTENT = {
+    'https://ru.hexlet.io/courses': EXPECTED_PAGE,
+    'https://ru.hexlet.io/assets/application.css': EXPECTED_APPLICATION_CSS,
+    'https://cdn2.hexlet.io/assets/menu.css': EXPECTED_APPLICATION_CSS,
+    'https://cdn2.hexlet.io/packs/js/runtime.js': EXPECTED_RUNTIME_JS,
+}
+EXPECTED_BINARY_CONTENT = {
+    'https://ru.hexlet.io/images/python-icon.png': EXPECTED_IMAGE1,
+    'https://ru.hexlet.io/images/python-icon2.png': EXPECTED_IMAGE2,
+}
+
+
 
 
 def test():
@@ -25,7 +37,7 @@ def test():
             with open(fixture, 'r') as fixture_content:
                 response.get(test_address, text=fixture_content.read())
             with open(os.path.join(CWD, EXPECTED_IMAGE1), 'rb') as image1:
-                response.get(urljoin(test_address, 'images/python-icon.png'), content=image1.read())
+                response.get('https://ru.hexlet.io/images/python-icon.png', content=image1.read())
             with open(os.path.join(CWD, EXPECTED_IMAGE2), 'rb') as image2:
                 response.get(urljoin(test_address, 'images/python-icon2.png'), content=image2.read())
             with open(os.path.join(CWD, EXPECTED_APPLICATION_CSS), 'r') as link:

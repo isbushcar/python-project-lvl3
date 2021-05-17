@@ -1,11 +1,9 @@
 import os
-import pytest
-import requests
 import tempfile
 
+import pytest
+import requests
 import requests_mock
-from urllib.parse import urljoin
-
 from page_loader import download
 
 CWD = os.getcwd()

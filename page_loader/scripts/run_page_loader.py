@@ -30,7 +30,12 @@ def parse_args():
         action='store_true',
         help='log will be saved to page-loader.log',
     )
-    parser.add_argument('-V', '--version', action='version', version='%(prog)s 0.5.0')  # noqa: WPS323, E501
+    parser.add_argument(
+        '-V',
+        '--version',
+        action='version',
+        version='%(prog)s 0.5.0',  # noqa: WPS323
+    )
     return parser.parse_args()
 
 

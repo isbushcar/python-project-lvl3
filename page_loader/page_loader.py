@@ -16,10 +16,7 @@ def download(url, dir_to_save):
     """Save internet page to specified directory."""
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
     check_dir(path_to_save)
-    response = make_http_request(url, allow_redirects=False)
-    while response.status_code != 200:  # noqa: WPS432
-        url = response.headers['Location']
-        response = make_http_request(url, allow_redirects=False)
+    response, url = make_http_request(url)
     page_name = get_page_name(url)
     parsed_page = BeautifulSoup(response.text, 'html.parser')
     page_content = parsed_page.find_all(['img', 'link', 'script'])
@@ -32,14 +29,19 @@ def download(url, dir_to_save):
     return page_path
 
 
-def make_http_request(url, allow_redirects=True):
-    """Request content and raise exception if something went wrong."""
+def make_http_request(url):
+    """Return content, it's correct url or raise exception if something went wrong."""  # noqa: E501
     logging.info(f'Requesting {url}')
-    response = requests.get(url, allow_redirects=allow_redirects)
+    response = requests.get(url, allow_redirects=False)
+    while response.is_redirect:
+        old_url = url
+        url = response.headers['Location']
+        logging.info(f'{old_url} redirected to {url}')
+        response = requests.get(url, allow_redirects=False)
     if response.status_code != 200:  # noqa: WPS432
         response.raise_for_status()
     logging.info(f'Got response from {url}')
-    return response
+    return response, url
 
 
 def download_content(page_content, page_url, files_dir):
@@ -58,23 +60,29 @@ def download_content(page_content, page_url, files_dir):
             progress_bar.next()
             continue
         content_url = get_content_url(page_url, old_content_url)
-        if urlparse(content_url)[1] != urlparse(page_url)[1]:
+        if urlparse(content_url).netloc != urlparse(page_url).netloc:
             progress_bar.next()
             continue
         file_name = get_file_name(content_url)
-        response = make_http_request(content_url)
+        response, content_url = make_http_request(content_url)
         write_file(
             os.path.join(files_dir, file_name),
             response.content,
             binary=True,
         )
-        element[attr] = f'{os.path.split(files_dir)[1]}/{file_name}'  # noqa: WPS221, WPS237, E501
+        new_link = f'{os.path.split(files_dir)[1]}/{file_name}'  # noqa: WPS237
+        replace_content_link(element, attr, new_link)
         progress_bar.next()
     progress_bar.finish()
 
 
 def get_content_url(page_url, old_content_url):
-    """Return correct content's URL."""
-    parsed_page_url = list(urlparse(page_url))
-    parsed_page_url[2] = ''
+    """Return content's URL."""
+    parsed_page_url = urlparse(page_url)
+    parsed_page_url._replace(netloc='')  # noqa: WPS437
     return urljoin(urlunparse(parsed_page_url), old_content_url)
+
+
+def replace_content_link(element, attr, new_link):
+    """Replace content link with new one."""
+    element[attr] = new_link

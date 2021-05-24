@@ -36,23 +36,30 @@ def test():
                 with open(content, 'rb') as fixture_content:
                     response.get(link, content=fixture_content.read())
             response.get('http://google.com', status_code=301, headers={'Location': 'https://ru.hexlet.io/courses'})
+
             download('http://google.com', tmpdirname)
+
         result_file = os.path.join(tmpdirname, 'ru-hexlet-io-courses.html')
         assert os.path.exists(result_file) is True, 'page should exist'
         with open(result_file) as result_file, open(EXPECTED_PAGE) as expected_page:
             assert result_file.read() == expected_page.read(), 'page should be equal'
+
         files_dir = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/')
         assert content_exists(tmpdirname, 'ru-hexlet-io-images-python-icon.png'), 'all images should be downloaded'
         assert content_exists(tmpdirname, 'ru-hexlet-io-images-python-icon2.png'), 'all images should be downloaded'
         assert content_exists(tmpdirname, 'ru-hexlet-io-assets-application.css'), 'links content should be downloaded'
+
         application_css = os.path.join(files_dir, 'ru-hexlet-io-assets-application.css')
         with open(application_css) as application_css, open(EXPECTED_APPLICATION_CSS) as expected_application_css:
             assert application_css.read() == expected_application_css.read(), 'application.css should be equal'
+
         assert content_exists(tmpdirname, 'ru-hexlet-io-courses.html'), 'links content should be downloaded'
         courses_html = os.path.join(files_dir, 'ru-hexlet-io-courses.html')
         with open(courses_html) as courses_html, open(EXPECTED_COURSES_HTML) as expected_courses_html:
             assert courses_html.read() == expected_courses_html.read(), 'courses.html should be equal'
+
         assert not content_exists(tmpdirname, 'ru-hexlet-io-cdn2-hexlet-io-assets-menu.css'), 'files from other host should not be downloaded'
+
         assert content_exists(tmpdirname, 'ru-hexlet-io-packs-js-runtime.js'), 'script content should be downloaded'
         runtime_js = os.path.join(files_dir, 'ru-hexlet-io-packs-js-runtime.js')
         with open(runtime_js) as runtime_js, open(EXPECTED_RUNTIME_JS) as expected_runtime_js:

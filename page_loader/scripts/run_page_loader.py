@@ -4,6 +4,7 @@
 
 import argparse
 import logging
+import os
 import sys
 
 import requests
@@ -20,8 +21,8 @@ def parse_args():
     parser.add_argument('page_url')
     parser.add_argument(
         '-o --output',
-        default='/app',
-        help='output dir (default: "app")',
+        default=os.getcwd(),
+        help='output dir (default: current directory)',
         metavar='[dir]',
         dest='output',
     )

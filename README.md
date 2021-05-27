@@ -18,7 +18,7 @@ Could be used as python package or command-line utility.
 `page-loader [options] <url>`
 
 Available options:  
-`-o --output [dir]`  output directory (default: "app"). Directory should exist!  
+`-o --output [dir]`  output directory (default: current directory). Directory should exist!  
 `--logging` enable logging. Log will be saved to file page-loader.log in current directory  
 `-h, --help` output usage information  
 `-V, --version` show version

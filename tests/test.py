@@ -49,9 +49,21 @@ def test():
             assert result_file.read() == expected_page.read(), 'page should be equal'
 
         files_dir = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/')
+
         assert content_exists(tmpdirname, 'ru-hexlet-io-images-python-icon.png'), 'all images should be downloaded'
+        result_image = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/', 'ru-hexlet-io-images-python-icon.png')
+        with open(EXPECTED_IMAGE1, 'rb') as expected_image, open(result_image, 'rb') as result_image:
+            assert expected_image.read() == result_image.read(), 'images should be equal'
+
         assert content_exists(tmpdirname, 'ru-hexlet-io-images-python-icon2.png'), 'all images should be downloaded'
+        result_image = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/', 'ru-hexlet-io-images-python-icon2.png')
+        with open(EXPECTED_IMAGE2, 'rb') as expected_image, open(result_image, 'rb') as result_image:
+            assert expected_image.read() == result_image.read(), 'images should be equal'
+
         assert content_exists(tmpdirname, 'ru-hexlet-io-assets-application.css'), 'links content should be downloaded'
+        result_file = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/', 'ru-hexlet-io-assets-application.css')
+        with open(EXPECTED_APPLICATION_CSS, 'r') as expected_file, open(result_file, 'r') as result_file:
+            assert result_file.read() == expected_file.read(), 'downloaded files should be equal'
 
         application_css = os.path.join(files_dir, 'ru-hexlet-io-assets-application.css')
         with open(application_css) as application_css, open(EXPECTED_APPLICATION_CSS) as expected_application_css:

@@ -50,17 +50,17 @@ def test():
 
         files_dir = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/')
 
-        assert content_exists(tmpdirname, 'ru-hexlet-io-images-python-icon.png'), 'all images should be downloaded'
+        assert content_exists(files_dir, 'ru-hexlet-io-images-python-icon.png'), 'all images should be downloaded'
         result_image = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/', 'ru-hexlet-io-images-python-icon.png')
         with open(EXPECTED_IMAGE1, 'rb') as expected_image, open(result_image, 'rb') as result_image:
             assert expected_image.read() == result_image.read(), 'images should be equal'
 
-        assert content_exists(tmpdirname, 'ru-hexlet-io-images-python-icon2.png'), 'all images should be downloaded'
+        assert content_exists(files_dir, 'ru-hexlet-io-images-python-icon2.png'), 'all images should be downloaded'
         result_image = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/', 'ru-hexlet-io-images-python-icon2.png')
         with open(EXPECTED_IMAGE2, 'rb') as expected_image, open(result_image, 'rb') as result_image:
             assert expected_image.read() == result_image.read(), 'images should be equal'
 
-        assert content_exists(tmpdirname, 'ru-hexlet-io-assets-application.css'), 'links content should be downloaded'
+        assert content_exists(files_dir, 'ru-hexlet-io-assets-application.css'), 'links content should be downloaded'
         result_file = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/', 'ru-hexlet-io-assets-application.css')
         with open(EXPECTED_APPLICATION_CSS, 'r') as expected_file, open(result_file, 'r') as result_file:
             assert result_file.read() == expected_file.read(), 'downloaded files should be equal'
@@ -69,14 +69,14 @@ def test():
         with open(application_css) as application_css, open(EXPECTED_APPLICATION_CSS) as expected_application_css:
             assert application_css.read() == expected_application_css.read(), 'application.css should be equal'
 
-        assert content_exists(tmpdirname, 'ru-hexlet-io-courses.html'), 'links content should be downloaded'
+        assert content_exists(files_dir, 'ru-hexlet-io-courses.html'), 'links content should be downloaded'
         courses_html = os.path.join(files_dir, 'ru-hexlet-io-courses.html')
         with open(courses_html) as courses_html, open(EXPECTED_COURSES_HTML) as expected_courses_html:
             assert courses_html.read() == expected_courses_html.read(), 'courses.html should be equal'
 
-        assert not content_exists(tmpdirname, 'ru-hexlet-io-cdn2-hexlet-io-assets-menu.css'), 'files from other host should not be downloaded'
+        assert not content_exists(files_dir, 'ru-hexlet-io-cdn2-hexlet-io-assets-menu.css'), 'files from other host should not be downloaded'
 
-        assert content_exists(tmpdirname, 'ru-hexlet-io-packs-js-runtime.js'), 'script content should be downloaded'
+        assert content_exists(files_dir, 'ru-hexlet-io-packs-js-runtime.js'), 'script content should be downloaded'
         runtime_js = os.path.join(files_dir, 'ru-hexlet-io-packs-js-runtime.js')
         with open(runtime_js) as runtime_js, open(EXPECTED_RUNTIME_JS) as expected_runtime_js:
             assert runtime_js.read() == expected_runtime_js.read(), 'runtime.js should be equal'
@@ -124,6 +124,5 @@ def test_connection_errors():
                 download('http://google.com', tmpdirname)
 
 
-def content_exists(tmpdirname, name):
-    files_dir = os.path.join(tmpdirname, 'ru-hexlet-io-courses_files/')
-    return os.path.exists(os.path.join(files_dir, name))
+def content_exists(files_dir, file_name):
+    return os.path.exists(os.path.join(files_dir, file_name))

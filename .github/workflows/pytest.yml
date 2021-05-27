@@ -9,25 +9,7 @@ on:
       - main
 
 jobs:
-  run-tests:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-    - name: Install dependencies
-      run: |
-        pip install poetry
-        poetry install
-    - name: Run pytest
-      run: |
-        make test
-  coverage:
-    needs: run-tests
+  run-tests-and-check-coverage:
     name: coverage
     runs-on: ubuntu-latest
     steps:

@@ -6,14 +6,18 @@ import requests
 import requests_mock
 from page_loader import download
 
-CWD = os.getcwd()
-TEST_PAGE = os.path.join(CWD, 'tests/fixtures/test-page.html')
-EXPECTED_PAGE = os.path.join(CWD, 'tests/fixtures/test-page-result.html')
-EXPECTED_IMAGE1 = os.path.join(CWD, 'tests/fixtures/images/python-icon.png')
-EXPECTED_IMAGE2 = os.path.join(CWD, 'tests/fixtures/images/python-icon2.png')
-EXPECTED_APPLICATION_CSS = os.path.join(CWD, 'tests/fixtures/links/application.css')
-EXPECTED_COURSES_HTML = os.path.join(CWD, 'tests/fixtures/links/courses.html')
-EXPECTED_RUNTIME_JS = os.path.join(CWD, 'tests/fixtures/scripts/runtime.js')
+
+def get_fixture_path(file):
+    return os.path.join('tests/fixtures', file)
+
+
+TEST_PAGE = get_fixture_path('test-page.html')
+EXPECTED_PAGE = get_fixture_path('test-page-result.html')
+EXPECTED_IMAGE1 = get_fixture_path('images/python-icon.png')
+EXPECTED_IMAGE2 = get_fixture_path('images/python-icon2.png')
+EXPECTED_APPLICATION_CSS = get_fixture_path('links/application.css')
+EXPECTED_COURSES_HTML = get_fixture_path('links/courses.html')
+EXPECTED_RUNTIME_JS = get_fixture_path('scripts/runtime.js')
 EXPECTED_CONTENT = {
     'https://ru.hexlet.io/courses': TEST_PAGE,
     'https://ru.hexlet.io/assets/application.css': EXPECTED_APPLICATION_CSS,
@@ -69,7 +73,7 @@ def test():
 def test_os_errors():
     with tempfile.TemporaryDirectory() as tmpdirname:
         with requests_mock.Mocker() as response:
-            fixture = os.path.join(CWD, 'tests/fixtures/error_test_page.html')
+            fixture = 'tests/fixtures/error_test_page.html'
             with open(fixture, 'r') as fixture_content:
                 response.get("http://google.com", text=fixture_content.read())
             with tempfile.NamedTemporaryFile() as not_directory:

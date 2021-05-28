@@ -47,7 +47,7 @@ def make_http_request(url):
     return response, url
 
 
-def download_content(page_content, page_url, files_dir):
+def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
     """Download content and correct it's link in parsed page."""
     attr_list = {
         'link': 'href',
@@ -66,11 +66,11 @@ def download_content(page_content, page_url, files_dir):
         if urlparse(content_url).netloc != urlparse(page_url).netloc:
             progress_bar.next()
             continue
-        file_name = get_file_name(content_url)
         try:
             response, content_url = make_http_request(content_url)
         except requests.HTTPError:
             continue
+        file_name = get_file_name(content_url)
         write_file(
             os.path.join(files_dir, file_name),
             response.content,
@@ -87,7 +87,7 @@ def get_content_url(page_url, old_content_url):
     parsed_page_url = urlparse(page_url)
     parsed_page_url._replace(netloc='')  # noqa: WPS437
     old_content_url = old_content_url.lstrip('/')
-    return urljoin(f'{urlunparse(parsed_page_url)}/', old_content_url)
+    return urljoin(f'{urlunparse(parsed_page_url)}/', old_content_url)  # noqa: WPS237, E501
 
 
 def replace_content_link(element, attr, new_link):

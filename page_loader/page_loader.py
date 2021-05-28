@@ -67,7 +67,10 @@ def download_content(page_content, page_url, files_dir):
             progress_bar.next()
             continue
         file_name = get_file_name(content_url)
-        response, content_url = make_http_request(content_url)
+        try:
+            response, content_url = make_http_request(content_url)
+        except requests.HTTPError:
+            continue
         write_file(
             os.path.join(files_dir, file_name),
             response.content,
@@ -83,7 +86,8 @@ def get_content_url(page_url, old_content_url):
     """Return content's URL."""
     parsed_page_url = urlparse(page_url)
     parsed_page_url._replace(netloc='')  # noqa: WPS437
-    return urljoin(urlunparse(parsed_page_url), old_content_url)
+    old_content_url = old_content_url.lstrip('/')
+    return urljoin(f'{urlunparse(parsed_page_url)}/', old_content_url)
 
 
 def replace_content_link(element, attr, new_link):

@@ -89,7 +89,10 @@ def get_normalized_content_url(page_url, content_url):
     """Return content's URL."""
     if content_url.startswith('http:') or content_url.startswith('https'):
         return content_url
-    return urljoin(page_url, content_url)
+    return urljoin(
+        page_url if page_url.endswith('/') else f'{page_url}/',
+        content_url,
+    )
 
 
 def replace_content_link(element, attr, new_link):

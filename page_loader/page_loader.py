@@ -56,15 +56,14 @@ def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
     }
     progress_bar = PixelBar('Processing', max=len(page_content))
     for element in page_content:
+        progress_bar.next()
         attr = attr_list[element.name]
         try:
             old_content_url = element[attr]
         except KeyError:
-            progress_bar.next()
             continue
         content_url = get_content_url(page_url, old_content_url)
         if urlparse(content_url).netloc != urlparse(page_url).netloc:
-            progress_bar.next()
             continue
         try:
             response, content_url = make_http_request(content_url)
@@ -78,7 +77,6 @@ def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
         )
         new_link = f'{os.path.split(files_dir)[1]}/{file_name}'  # noqa: WPS237
         replace_content_link(element, attr, new_link)
-        progress_bar.next()
     progress_bar.finish()
 
 

@@ -40,7 +40,7 @@ def make_http_request(url):
         old_url = url
         url = response.headers['Location']
         logging.info(f'{old_url} redirected to {url}')
-        response = requests.get(url, allow_redirects=False)
+        return make_http_request(url)
     if response.status_code != 200:  # noqa: WPS432
         response.raise_for_status()
     logging.info(f'Got response from {url}')

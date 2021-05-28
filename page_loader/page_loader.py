@@ -85,12 +85,14 @@ def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
     progress_bar.finish()
 
 
-def get_normalized_content_url(page_url, old_content_url):
+def get_normalized_content_url(page_url, content_url):
     """Return content's URL."""
+    if content_url.startswith('http:') or content_url.startswith('https'):
+        return content_url
     parsed_page_url = urlparse(page_url)
     parsed_page_url._replace(netloc='')  # noqa: WPS437
-    old_content_url = old_content_url.lstrip('/')
-    return urljoin(f'{urlunparse(parsed_page_url)}/', old_content_url)  # noqa: WPS237, E501
+    content_url = content_url.lstrip('/')
+    return urljoin(f'{urlunparse(parsed_page_url)}/', f'{content_url}')  # noqa: WPS237, E501
 
 
 def replace_content_link(element, attr, new_link):

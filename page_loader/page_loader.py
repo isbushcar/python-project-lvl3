@@ -59,17 +59,21 @@ def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
         progress_bar.next()
         attr = attr_list[element.name]
         try:
-            old_content_url = element[attr]
+            content_url = element[attr]
         except KeyError:
             continue
-        content_url = get_content_url(page_url, old_content_url)
-        if urlparse(content_url).netloc != urlparse(page_url).netloc:
+        normalized_content_url = get_normalized_content_url(
+            page_url, content_url,
+        )
+        if urlparse(normalized_content_url).netloc != urlparse(page_url).netloc:  # noqa: E501
             continue
         try:
-            response, content_url = make_http_request(content_url)
+            response, normalized_content_url = make_http_request(
+                normalized_content_url,
+            )
         except requests.HTTPError:
             continue
-        file_name = get_file_name(content_url)
+        file_name = get_file_name(normalized_content_url)
         write_file(
             os.path.join(files_dir, file_name),
             response.content,
@@ -80,7 +84,7 @@ def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
     progress_bar.finish()
 
 
-def get_content_url(page_url, old_content_url):
+def get_normalized_content_url(page_url, old_content_url):
     """Return content's URL."""
     parsed_page_url = urlparse(page_url)
     parsed_page_url._replace(netloc='')  # noqa: WPS437

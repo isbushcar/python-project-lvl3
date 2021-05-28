@@ -103,11 +103,15 @@ def test_os_errors():
 def test_http_errors():
     with tempfile.TemporaryDirectory() as tmpdirname:
         with requests_mock.Mocker() as response:
-            response.get('http://google.com', status_code=404)
-            with pytest.raises(requests.HTTPError) as error:
-                download('http://google.com', tmpdirname)
-            assert '404' in str(error.value)
+            fixture = 'tests/fixtures/error_test_page.html'
+            with open(fixture, 'r') as fixture_content:
+                response.get('http://google.com', text=fixture_content.read())
             response.get('http://google.com/images/python-icon.png', status_code=404)
+            download('http://google.com', tmpdirname)
+            result_file = os.path.join(tmpdirname, 'google-com.html')
+            assert os.path.exists(result_file) is True, "broken file links shouldn't raise errors"
+
+            response.get('http://google.com', status_code=404)
             with pytest.raises(requests.HTTPError) as error:
                 download('http://google.com', tmpdirname)
             assert '404' in str(error.value)

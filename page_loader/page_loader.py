@@ -3,7 +3,7 @@
 
 import logging
 import os
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -89,10 +89,7 @@ def get_normalized_content_url(page_url, content_url):
     """Return content's URL."""
     if content_url.startswith('http:') or content_url.startswith('https'):
         return content_url
-    parsed_page_url = urlparse(page_url)
-    parsed_page_url._replace(netloc='')  # noqa: WPS437
-    content_url = content_url.lstrip('/')
-    return urljoin(f'{urlunparse(parsed_page_url)}/', f'{content_url}')  # noqa: WPS237, E501
+    return urljoin(page_url, content_url)
 
 
 def replace_content_link(element, attr, new_link):

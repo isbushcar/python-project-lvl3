@@ -36,7 +36,7 @@ def make_http_request(url):
     """Return content, it's correct url or raise exception if something went wrong."""  # noqa: E501
     logging.info(f'Requesting {url}')
     response = requests.get(url, allow_redirects=False)
-    while response.is_redirect:
+    if response.is_redirect:
         old_url = url
         url = response.headers['Location']
         logging.info(f'{old_url} redirected to {url}')
@@ -72,6 +72,7 @@ def download_content(page_content, page_url, files_dir):  # noqa: C901, WPS231
                 normalized_content_url,
             )
         except requests.HTTPError:
+            logging.info(f'Failed to download {content_url} - HTTP Error')
             continue
         file_name = get_file_name(normalized_content_url)
         write_file(

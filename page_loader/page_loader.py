@@ -7,24 +7,27 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
 from bs4 import BeautifulSoup
-from page_loader.file_system_worker import check_dir, write_file
-from page_loader.name_formatters import get_file_name, get_page_name
+from page_loader.file_system_worker import (
+    check_for_errors_and_add_dir,
+    write_file,
+)
+from page_loader.name_formatters import get_file_name, get_files_dir_name
 from progress.bar import PixelBar
 
 
 def download(url, dir_to_save):
     """Save internet page to specified directory."""
     path_to_save = os.path.join(os.getcwd(), dir_to_save)
-    check_dir(path_to_save)
+    check_for_errors_and_add_dir(path_to_save, to_add=False)
     response, url = make_http_request(url)
-    page_name = get_page_name(url)
+    page_name = get_file_name(url, is_page=True)
     parsed_page = BeautifulSoup(response.text, 'html.parser')
     page_content = parsed_page.find_all(['img', 'link', 'script'])
     if page_content:
-        files_dir = os.path.join(path_to_save, f'{page_name}_files')
-        check_dir(files_dir, to_add=True)
+        files_dir = get_files_dir_name(url, path_to_save)
+        check_for_errors_and_add_dir(files_dir)
         download_content(page_content, url, files_dir)
-    page_path = os.path.join(path_to_save, f'{page_name}.html')
+    page_path = os.path.join(path_to_save, page_name)
     write_file(page_path, parsed_page.prettify(formatter='html5'))
     return page_path
 
